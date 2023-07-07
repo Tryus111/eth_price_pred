@@ -30,19 +30,16 @@ train_scaled = sc.fit_transform(training_data)
 x_train = []
 y_train = []
 
-for i in range(70, 1412):
-    x_train.append(train_scaled[i-70: i, 0])
+for i in range(60, 1412):
+    x_train.append(train_scaled[i-60: i, 0])
     y_train.append(train_scaled[i, 0])
 
-x_train = np.array(x_train)
-y_train = np.array(y_train)
+x_train, y_train = np.array(x_train), np.array(y_train)
 
 # Reshape
 x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
 
 # Build the model
-import numpy as np
-import pandas as pd
 from tensorflow.keras.layers import Dropout, Dense, LSTM
 from tensorflow.keras.models import Sequential
 
@@ -86,12 +83,25 @@ dataset_test = test_data.copy()
 real_ETH_price = dataset_test.iloc[:, 1:2].values
 
 # Concatenate
-dataset_total = pd.concat((dataset_train['Open'], dataset_test['Open']), axis = 0)
-inputs = dataset_total[len(dataset_total) - len(dataset_test) - 60:].values
-
-from sklearn.preprocessing import MinMaxScaler
-sc = MinMaxScaler()
-inputs = inputs.reshape(-1, 1)
+dataset_total = pd.concat((dataset_train['Open'], dataset_test['Open']), axis = 0).values
+inputs = dataset_total[len(dataset_total) - len(dataset_test) - 60:].reshape(-1, 1)
 inputs = sc.transform(inputs)
 
+x_test = []
+for i in range(60, 216):
+    x_test.append(inputs[i-60: i, 0])
+x_test = np.array(x_test)
+x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+
+pred_ETH_price = rnn.predict(x_test)
+pred_ETH_price = sc.inverse_transform(pred_ETH_price)
+
+# Visualization
+import matplotlib.pyplot as plt
+plt.plot(real_ETH_price, label = 'Real Price', color = 'blue')
+plt.plot(pred_ETH_price, label = 'Predicted Price', color = 'red')
+plt.xlabel('Time')
+plt.ylabel('ETH Price')
+plt.legend()
+plt.show()
 
